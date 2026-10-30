@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F6F9; --card:#FFFFFF; --ink:#1B2236; --muted:#667085; --line:#DCE1E9;
+  --accent:#2D5BE3; --accent-soft:#E6ECFD; --danger:#C93C3C; --hol:#B4541A;
+  --radius:10px; --H:48px;
+  --head:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Instrument Sans','Segoe UI',system-ui,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#11151E; --card:#1A2030; --ink:#E8EBF2; --muted:#9AA4B8; --line:#2B3347;
+  --accent:#86A2FF; --accent-soft:#222C4D; --danger:#FF7B7B; --hol:#F2A56B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:288px 1fr;height:100vh}
+/* ---------- barra lateral ---------- */
+aside{border-right:1px solid var(--line);background:var(--card);padding:18px 16px;overflow:auto;display:flex;flex-direction:column;gap:22px}
+.brand{font-family:var(--head);font-weight:700;font-size:22px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand i{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;font-weight:500}
+.btn:hover{background:var(--accent-soft)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
+.btn.icon{padding:6px 10px}
+.side-title{font-weight:600;font-size:13px;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+.mini .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:600}
+.mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.mini-grid .w{font-size:11px;color:var(--muted);padding:2px 0}
+.mini-grid button{border:0;background:none;border-radius:6px;padding:5px 0;position:relative;font-size:12px}
+.mini-grid button:hover{background:var(--accent-soft)}
+.mini-grid button.out{color:var(--muted);opacity:.55}
+.mini-grid button.today{background:var(--accent);color:#fff}
+.mini-grid button.sel:not(.today){outline:1.5px solid var(--accent)}
+.mini-grid button.has::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor;opacity:.7}
+.cats label{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.cats input{accent-color:var(--c)}
+.cats .dot{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.tasks form{display:flex;gap:6px;margin-bottom:8px}
+.tasks input[type=text]{flex:1;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 9px}
+.tasks select{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:6px 4px}
+.task{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed var(--line)}
+.task.done span.t{text-decoration:line-through;color:var(--muted)}
+.task .t{flex:1}
+.task small{display:block;color:var(--muted)}
+.task small.late{color:var(--danger)}
+.task .p{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+.task .x{border:0;background:none;color:var(--muted);padding:0 4px}
+.stat-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.stat-row .bar{flex:1;height:6px;background:var(--line);border-radius:4px;overflow:hidden}
+.stat-row .bar i{display:block;height:100%;background:var(--c)}
+.stat-sum{color:var(--muted);margin-bottom:6px}
+/* ---------- área principal ---------- */
+main{display:flex;flex-direction:column;min-width:0;height:100vh}
+.toolbar{display:flex;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
+.toolbar h1{font-family:var(--head);font-size:22px;letter-spacing:-.02em;margin:0 8px 0 4px;min-width:170px;text-transform:capitalize}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:none;padding:7px 12px;font-weight:500}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
+.spacer{flex:1}
+.search{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:7px 10px;width:200px}
+.view{flex:1;overflow:auto;min-height:0}
+/* mês */
+.month{display:grid;grid-template-rows:auto 1fr;height:100%;min-height:560px}
+.month .wd,.month .cells{display:grid;grid-template-columns:repeat(7,1fr)}
+.month .wd div{padding:8px;color:var(--muted);font-weight:600;font-size:12px;border-bottom:1px solid var(--line)}
+.month .cells{grid-template-rows:repeat(6,minmax(96px,1fr))}
+.cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 5px;overflow:hidden;cursor:pointer;min-width:0}
+.cell:nth-child(7n){border-right:0}
+.cell.out{background:color-mix(in srgb,var(--paper) 70%,transparent)}
+.cell.out .num{color:var(--muted)}
+.cell.drop{background:var(--accent-soft)}
+.cell .num{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;font-weight:600;font-size:12px}
+.cell.today .num{background:var(--accent);color:#fff}
+.cell .hol{font-size:11px;color:var(--hol);margin-left:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:flex;gap:4px;align-items:center;width:100%;text-align:left;border:0;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:4px;padding:1px 5px;margin-top:2px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.chip.conflict{box-shadow:inset 0 0 0 1px var(--danger)}
+.chip em{font-style:normal;color:var(--muted);margin-right:4px}
+.more{border:0;background:none;color:var(--accent);font-size:12px;padding:2px 4px;font-weight:600}
+/* semana / dia */
+.tg{min-width:640px}
+.tg-head,.tg-allday,.tg-body{display:grid;grid-template-columns:54px repeat(var(--n),1fr)}
+.tg-head{position:sticky;top:0;background:var(--card);z-index:5;border-bottom:1px solid var(--line)}
+.dh{padding:8px 6px;text-align:center;border-left:1px solid var(--line)}
+.dh span{display:block;color:var(--muted);font-size:12px}
+.dh b{font-family:var(--head);font-size:20px}
+.dh.today b{color:var(--accent)}
+.dh .hol{display:block;font-size:11px;color:var(--hol);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg-allday{border-bottom:1px solid var(--line);background:var(--card)}
+.tg-allday>div{border-left:1px solid var(--line);padding:3px;min-height:26px}
+.tg-allday>div:first-child{border-left:0;font-size:11px;color:var(--muted);padding:6px 4px}
+.gut{position:relative}
+.gut div{height:var(--H);font-size:11px;color:var(--muted);text-align:right;padding-right:8px;transform:translateY(-7px)}
+.col{position:relative;border-left:1px solid var(--line);height:calc(var(--H)*24);background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% var(--H);cursor:cell}
+.col.today{background-color:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+.blk{position:absolute;border:0;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 22%,var(--card));border-radius:5px;padding:2px 5px;text-align:left;font-size:12px;overflow:hidden;cursor:grab}
+.blk b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk small{color:var(--muted)}
+.blk.conflict{box-shadow:0 0 0 1px var(--danger)}
+.now{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:3;pointer-events:none}
+.now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+/* agenda */
+.agenda{max-width:760px;margin:0 auto;padding:18px}
+.ag-day{display:grid;grid-template-columns:96px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ag-day h3{margin:0;font-family:var(--head);font-size:16px}
+.ag-day h3 small{display:block;font-family:var(--body);font-weight:400;color:var(--muted)}
+.ag-ev{display:flex;gap:10px;width:100%;border:0;background:none;text-align:left;padding:5px 8px;border-radius:8px}
+.ag-ev:hover{background:var(--accent-soft)}
+.ag-ev i{width:4px;border-radius:2px;background:var(--c);flex:none}
+.ag-ev small{color:var(--muted);display:block}
+.empty{padding:60px 20px;text-align:center;color:var(--muted)}
+/* diálogos */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:0;width:min(520px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.28)}
+dialog::backdrop{background:rgba(10,14,25,.45)}
+.dlg{padding:20px;display:grid;gap:12px}
+.dlg h2{font-family:var(--head);margin:0;font-size:20px}
+.row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.f{display:grid;gap:4px}
+.f>label,.f>span{font-weight:600;font-size:12px;color:var(--muted)}
+.f input[type=text],.f input[type=date],.f input[type=time],.f input[type=number],.f select,.f textarea{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 10px;width:100%}
+.f textarea{resize:vertical;min-height:64px}
+.check{display:flex;gap:8px;align-items:center}
+.wds{display:flex;gap:6px;flex-wrap:wrap}
+.wds label{border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;font-size:12px}
+.wds input{display:none}
+.wds label:has(input:checked){background:var(--accent);color:#fff;border-color:var(--accent)}
+.warn{color:var(--danger);font-size:13px;min-height:18px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.actions .l{margin-right:auto}
+#toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:50}
+.toast{background:var(--ink);color:var(--paper);padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;max-width:340px}
+.toast button{border:0;background:none;color:inherit;text-decoration:underline;padding:0}
+@media (max-width:900px){.app{grid-template-columns:1fr}aside{display:none}.search{width:130px}}
+@media (prefers-reduced-motion:no-preference){dialog[open]{animation:pop .14s ease-out}@keyframes pop{from{transform:scale(.97);opacity:0}}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand"><i></i>Agenda</div>
+    <button class="btn primary" id="btn-new">Novo evento (n)</button>
+    <section class="mini" id="mini"></section>
+    <section>
+      <h3 class="side-title">Categorias <button class="btn icon" id="btn-cat" title="Adicionar categoria">+</button></h3>
+      <div class="cats" id="cats"></div>
+    </section>
+    <section class="tasks">
+      <h3 class="side-title">Tarefas</h3>
+      <form id="task-form">
+        <input type="text" id="task-text" placeholder="Nova tarefa" aria-label="Nova tarefa" required>
+        <select id="task-prio" aria-label="Prioridade"><option value="2">Alta</option><option value="1" selected>Média</option><option value="0">Baixa</option></select>
+        <button class="btn icon" type="submit" aria-label="Adicionar tarefa">+</button>
+      </form>
+      <div id="tasks"></div>
+    </section>
+    <section>
+      <h3 class="side-title">Resumo do mês</h3>
+      <div id="stats"></div>
+    </section>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <button class="btn icon" id="prev" aria-label="Anterior">‹</button>
+      <button class="btn" id="today">Hoje</button>
+      <button class="btn icon" id="next" aria-label="Próximo">›</button>
+      <h1 id="title"></h1>
+      <div class="seg" id="modes">
+        <button data-m="month">Mês</button><button data-m="week">Semana</button><button data-m="day">Dia</button><button data-m="agenda">Lista</button>
+      </div>
+      <div class="spacer"></div>
+      <input class="search" id="search" type="search" placeholder="Buscar ( / )" aria-label="Buscar eventos">
+      <button class="btn" id="undo" title="Desfazer (Ctrl+Z)">Desfazer</button>
+      <button class="btn" id="menu-btn">Mais</button>
+    </div>
+    <div class="view" id="view"></div>
+  </main>
+</div>
+
+<!-- Evento -->
+<dialog id="dlg-event">
+  <div class="dlg">
+    <h2 id="ev-heading">Novo evento</h2>
+    <div class="f"><label for="ev-title">Título</label><input type="text" id="ev-title" maxlength="120"></div>
+    <div class="row">
+      <div class="f"><label for="ev-date">Data</label><input type="date" id="ev-date"></div>
+      <div class="f"><label for="ev-cat">Categoria</label><select id="ev-cat"></select></div>
+    </div>
+    <label class="check"><input type="checkbox" id="ev-allday"> Dia inteiro</label>
+    <div class="row" id="ev-times">
+      <div class="f"><label for="ev-start">Início</label><input type="time" id="ev-start"></div>
+      <div class="f"><label for="ev-end">Fim</label><input type="time" id="ev-end"></div>
+    </div>
+    <div class="row">
+      <div class="f"><label for="ev-repeat">Repetir</label>
+        <select id="ev-repeat"><option value="none">Não repete</option><option value="daily">Todo dia</option><option value="weekly">Toda semana</option><option value="monthly">Todo mês</option><option value="yearly">Todo ano</option></select></div>
+      <div class="f"><label for="ev-reminder">Lembrete</label>
+        <select id="ev-reminder"><option value="-1">Sem lembrete</option><option value="0">Na hora</option><option value="10">10 min antes</option><option value="30">30 min antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></div>
+    </div>
+    <div id="ev-rep-opts" hidden>
+      <div class="row">
+        <div class="f"><label for="ev-interval">A cada (intervalo)</label><input type="number" id="ev-interval" min="1" max="52" value="1"></div>
+        <div class="f"><label for="ev-until">Repetir até</label><input type="date" id="ev-until"></div>
+      </div>
+      <div class="f" id="ev-wd-wrap"><span>Dias da semana</span>
+        <div class="wds" id="ev-wd"></div></div>
+    </div>
+    <div class="f"><label for="ev-loc">Local</label><input type="text" id="ev-loc"></div>
+    <div class="f"><label for="ev-desc">Descrição</label><textarea id="ev-desc"></textarea></div>
+    <div class="warn" id="ev-warn" role="status"></div>
+    <div class="actions">
+      <button class="btn danger l" id="ev-del" type="button">Excluir</button>
+      <button class="btn" id="ev-dup" type="button">Duplicar</button>
+      <button class="btn" id="ev-cancel" type="button">Cancelar</button>
+      <button class="btn primary" id="ev-save" type="button">Salvar evento</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Escolha -->
+<dialog id="dlg-choose"><div class="dlg"><p id="choose-msg" style="margin:0"></p><div class="actions" id="choose-btns"></div></div></dialog>
+
+<!-- Menu Mais -->
+<dialog id="dlg-menu">
+  <div class="dlg">
+    <h2>Mais opções</h2>
+    <button class="btn" id="m-theme">Alternar tema claro/escuro</button>
+    <button class="btn" id="m-notif">Ativar notificações do navegador</button>
+    <button class="btn" id="m-ics">Exportar calendário (.ics)</button>
+    <button class="btn" id="m-json">Exportar backup (.json)</button>
+    <button class="btn" id="m-import">Importar backup (.json)</button>
+    <button class="btn danger" id="m-reset">Apagar todos os dados</button>
+    <input type="file" id="file-in" accept="application/json" hidden>
+    <p style="color:var(--muted);margin:0;font-size:12px">Atalhos: n novo · t hoje · m/s/d/l visualizações · ← → navegar · / buscar · Ctrl+Z desfazer</p>
+    <div class="actions"><button class="btn" id="m-close">Fechar</button></div>
+  </div>
+</dialog>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ================= utilidades ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const pad = n => String(n).padStart(2, '0');
+const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const dayDiff = (a, b) => Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5);
+const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const toTime = m => `${pad(Math.floor(m / 60) % 24)}:${pad(m % 60)}`;
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const weekStart = d => addDays(d, -d.getDay());
+const isToday = d => fmt(d) === fmt(new Date());
+const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const WDL = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+/* ================= feriados nacionais (BR) ================= */
+const holCache = {};
+function easter(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+    f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+    i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+    mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mo - 1, da);
+}
+function holidays(y) {
+  if (holCache[y]) return holCache[y];
+  const map = {}, add = (d, n) => map[fmt(d)] = n, fx = (m, d, n) => add(new Date(y, m - 1, d), n);
+  fx(1, 1, 'Confraternização Universal'); fx(4, 21, 'Tiradentes'); fx(5, 1, 'Dia do Trabalho');
+  fx(9, 7, 'Independência'); fx(10, 12, 'N. Sra. Aparecida'); fx(11, 2, 'Finados');
+  fx(11, 15, 'Proclamação da República'); if (y >= 2024) fx(11, 20, 'Consciência Negra'); fx(12, 25, 'Natal');
+  const p = easter(y);
+  add(addDays(p, -48), 'Carnaval'); add(addDays(p, -47), 'Carnaval'); add(addDays(p, -2), 'Sexta-feira Santa');
+  add(p, 'Páscoa'); add(addDays(p, 60), 'Corpus Christi');
+  return holCache[y] = map;
+}
+const holName = d => holidays(d.getFullYear())[fmt(d)] || '';
+
+/* ================= estado e persistência ================= */
+const KEY = 'agenda.v1';
+const DEFAULT_CATS = [
+  { id: 'trabalho', name: 'Trabalho', color: '#2D5BE3' }, { id: 'pessoal', name: 'Pessoal', color: '#D9488A' },
+  { id: 'estudos', name: 'Estudos', color: '#8A5CF6' }, { id: 'saude', name: 'Saúde', color: '#1E9E6A' },
+  { id: 'lazer', name: 'Lazer', color: '#E08A1E' }
+];
+function seed() {
+  const t = new Date(), mon = addDays(weekStart(t), 1), f = fmt;
+  return {
+    cats: DEFAULT_CATS, theme: null,
+    events: [
+      { id: uid(), title: 'Reunião de equipe', date: f(mon), start: '09:00', end: '10:00', allDay: false, cat: 'trabalho', loc: 'Sala 2', desc: 'Alinhamento semanal', repeat: 'weekly', interval: 1, until: '', wd: [1], reminder: 10, ex: [] },
+      { id: uid(), title: 'Academia', date: f(mon), start: '18:30', end: '19:30', allDay: false, cat: 'saude', loc: '', desc: '', repeat: 'weekly', interval: 1, until: '', wd: [1, 3, 5], reminder: 30, ex: [] },
+      { id: uid(), title: 'Aula de inglês', date: f(addDays(t, 1)), start: '19:00', end: '20:30', allDay: false, cat: 'estudos', loc: 'Online', desc: '', repeat: 'weekly', interval: 1, until: '', wd: [(addDays(t, 1)).getDay()], reminder: 10, ex: [] },
+      { id: uid(), title: 'Entrega do projeto', date: f(addDays(t, 3)), start: '14:00', end: '15:00', allDay: false, cat: 'trabalho', loc: '', desc: 'Enviar versão final', repeat: 'none', interval: 1, until: '', wd: [], reminder: 60, ex: [] },
+      { id: uid(), title: 'Almoço em família', date: f(addDays(weekStart(t), 6)), start: '12:00', end: '14:00', allDay: false, cat: 'pessoal', loc: '', desc: '', repeat: 'none', interval: 1, until: '', wd: [], reminder: -1, ex: [] },
+      { id: uid(), title: 'Aniversário da Ana', date: f(addDays(t, 9)), start: '', end: '', allDay: true, cat: 'pessoal', loc: '', desc: '', repeat: 'yearly', interval: 1, until: '', wd: [], reminder: 1440, ex: [] }
+    ],
+    tasks: [
+      { id: uid(), text: 'Revisar relatório mensal', prio: 2, done: false, due: f(addDays(t, 2)) },
+      { id: uid(), text: 'Marcar consulta de rotina', prio: 1, done: false, due: '' }
+    ]
+  };
+}
+let S = (() => { try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.events) return r; } catch (e) { } return seed(); })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Não foi possível salvar no navegador.'); } };
+const history = [];
+function snap() { history.push(JSON.stringify(S)); if (history.length > 50) history.shift(); }
+function undo() { if (!history.length) return toast('Nada para desfazer.'); S = JSON.parse(history.pop()); save(); render(); }
+const catOf = id => S.cats.find(c => c.id === id) || S.cats[0];
+
+const view = { mode: 'month', cursor: new Date(), q: '', hidden: new Set() };
+
+/* ================= recorrência ================= */
+function occurs(ev, d) {
+  const ds = fmt(d);
+  if (ds < ev.date || (ev.ex || []).includes(ds)) return false;
+  if (ev.until && ds > ev.until) return false;
+  const a = parse(ev.date), n = Math.max(1, +ev.interval || 1);
+  switch (ev.repeat) {
+    case 'none': return ds === ev.date;
+    case 'daily': return dayDiff(a, d) % n === 0;
+    case 'weekly': {
+      const weeks = Math.floor(dayDiff(weekStart(a), weekStart(d)) / 7);
+      const days = ev.wd && ev.wd.length ? ev.wd : [a.getDay()];
+      return weeks % n === 0 && days.includes(d.getDay());
+    }
+    case 'monthly': return d.getDate() === a.getDate() && ((d.getFullYear() - a.getFullYear()) * 12 + d.getMonth() - a.getMonth()) % n === 0;
+    case 'yearly': return d.getDate() === a.getDate() && d.getMonth() === a.getMonth() && (d.getFullYear() - a.getFullYear()) % n === 0;
+  }
+  return false;
+}
+function matchQuery(ev) {
+  if (!view.q) return true;
+  const q = view.q.toLowerCase();
+  return [ev.title, ev.desc, ev.loc, catOf(ev.cat).name].some(s => (s || '').toLowerCase().includes(q));
+}
+function eventsOn(d, all = false) {
+  const out = S.events.filter(ev => (all || (!view.hidden.has(ev.cat) && matchQuery(ev))) && occurs(ev, d));
+  out.sort((a, b) => (b.allDay - a.allDay) || (a.start || '').localeCompare(b.start || '') || a.title.localeCompare(b.title));
+  return out;
+}
+function conflictsOf(list) {
+  const ids = new Set(), t = list.filter(e => !e.allDay && e.start);
+  for (let i = 0; i < t.length; i++) for (let j = i + 1; j < t.length; j++) {
+    const a = t[i], b = t[j], ae = toMin(a.end || a.start) || toMin(a.start) + 60, be = toMin(b.end || b.start) || toMin(b.start) + 60;
+    if (toMin(a.start) < be && toMin(b.start) < ae) { ids.add(a.id); ids.add(b.id); }
+  }
+  return ids;
+}
+const endMin = e => Math.max(toMin(e.start) + 15, e.end ? toMin(e.end) : toMin(e.start) + 60);
+
+/* ================= renderização ================= */
+function render() {
+  document.documentElement.dataset.theme = S.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  $$('#modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === view.mode));
+  renderTitle(); renderMini(); renderCats(); renderTasks(); renderStats();
+  const v = $('#view'), keep = v.scrollTop;
+  ({ month: renderMonth, week: () => renderTime(weekDays()), day: () => renderTime([new Date(view.cursor)]), agenda: renderAgenda })[view.mode]();
+  if (view.mode === 'week' || view.mode === 'day') v.scrollTop = keep || 7 * 48 - 4;
+  $('#undo').disabled = !history.length;
+}
+function weekDays() { const s = weekStart(view.cursor); return [...Array(7)].map((_, i) => addDays(s, i)); }
+function renderTitle() {
+  const c = view.cursor; let t;
+  if (view.mode === 'month') t = `${MONTHS[c.getMonth()]} de ${c.getFullYear()}`;
+  else if (view.mode === 'day') t = `${c.getDate()} de ${MONTHS[c.getMonth()]}, ${WD[c.getDay()]}`;
+  else if (view.mode === 'week') { const d = weekDays(); t = `${d[0].getDate()} ${MONTHS[d[0].getMonth()].slice(0, 3)} – ${d[6].getDate()} ${MONTHS[d[6].getMonth()].slice(0, 3)} ${d[6].getFullYear()}`; }
+  else t = 'Próximos eventos';
+  $('#title').textContent = t; document.title = `${t} · Agenda`;
+}
+function chipHTML(ev, ds, conflict) {
+  const c = catOf(ev.cat);
+  return `<button class="chip ${conflict ? 'conflict' : ''}" draggable="true" data-id="${ev.id}" data-date="${ds}" style="--c:${c.color}" title="${esc(ev.title)}">${ev.allDay ? '' : `<em>${ev.start}</em>`}${esc(ev.title)}</button>`;
+}
+function renderMonth() {
+  const first = new Date(view.cursor.getFullYear(), view.cursor.getMonth(), 1), start = weekStart(first);
+  let h = `<div class="month"><div class="wd">${WD.map(w => `<div>${w}</div>`).join('')}</div><div class="cells">`;
+  for (let i = 0; i < 42; i++) {
+    const d = addDays(start, i), ds = fmt(d), list = eventsOn(d), cf = conflictsOf(list), hn = holName(d);
+    h += `<div class="cell ${d.getMonth() !== first.getMonth() ? 'out' : ''} ${isToday(d) ? 'today' : ''}" data-date="${ds}">
+      <span class="num">${d.getDate()}</span><span class="hol">${esc(hn)}</span>
+      ${list.slice(0, 3).map(e => chipHTML(e, ds, cf.has(e.id))).join('')}
+      ${list.length > 3 ? `<button class="more" data-more="${ds}">+${list.length - 3} mais</button>` : ''}</div>`;
+  }
+  $('#view').innerHTML = h + '</div></div>';
+}
+function layoutDay(list) {
+  const items = list.filter(e => !e.allDay && e.start).map(e => ({ e, s: toMin(e.start), f: endMin(e) })).sort((a, b) => a.s - b.s || b.f - a.f);
+  const out = []; let cluster = [], cend = 0;
+  const flush = () => { const n = Math.max(...cluster.map(x => x.col)) + 1; cluster.forEach(x => { x.n = n; out.push(x); }); cluster = []; };
+  for (const it of items) {
+    if (cluster.length && it.s >= cend) flush();
+    const used = cluster.filter(x => x.f > it.s).map(x => x.col); let col = 0; while (used.includes(col)) col++;
+    it.col = col; cluster.push(it); cend = Math.max(cend, it.f);
+  }
+  if (cluster.length) flush();
+  return out;
+}
+function renderTime(days) {
+  const n = days.length; let h = `<div class="tg" style="--n:${n}"><div class="tg-head"><div></div>`;
+  h += days.map(d => `<div class="dh ${isToday(d) ? 'today' : ''}"><span>${WD[d.getDay()]}</span><b>${d.getDate()}</b><span class="hol">${esc(holName(d))}</span></div>`).join('') + '</div>';
+  h += '<div class="tg-allday"><div>dia todo</div>' + days.map(d => `<div data-date="${fmt(d)}">${eventsOn(d).filter(e => e.allDay).map(e => chipHTML(e, fmt(d))).join('')}</div>`).join('') + '</div>';
+  h += '<div class="tg-body"><div class="gut">' + [...Array(24)].map((_, i) => `<div>${i ? pad(i) + ':00' : ''}</div>`).join('') + '</div>';
+  const now = new Date();
+  for (const d of days) {
+    const ds = fmt(d), list = eventsOn(d), cf = conflictsOf(list);
+    h += `<div class="col ${isToday(d) ? 'today' : ''}" data-date="${ds}">`;
+    for (const it of layoutDay(list)) {
+      const c = catOf(it.e.cat), top = it.s / 60 * 48, ht = Math.max(20, (it.f - it.s) / 60 * 48 - 2);
+      h += `<button class="blk ${cf.has(it.e.id) ? 'conflict' : ''}" draggable="true" data-id="${it.e.id}" data-date="${ds}" style="--c:${c.color};top:${top}px;height:${ht}px;left:calc(${it.col / it.n * 100}% + 1px);width:calc(${100 / it.n}% - 3px)"><b>${esc(it.e.title)}</b><small>${it.e.start}–${it.e.end || toTime(it.f)}${it.e.loc ? ' · ' + esc(it.e.loc) : ''}</small></button>`;
+    }
+    if (isToday(d)) h += `<div class="now" style="top:${(now.getHours() * 60 + now.getMinutes()) / 60 * 48}px"></div>`;
+    h += '</div>';
+  }
+  $('#view').innerHTML = h + '</div></div>';
+}
+function renderAgenda() {
+  const span = view.q ? 366 : 60; let h = '<div class="agenda">', any = false;
+  for (let i = 0; i < span; i++) {
+    const d = addDays(view.cursor, i), ds = fmt(d), list = eventsOn(d), hn = holName(d);
+    if (!list.length && !(hn && !view.q)) continue; any = true;
+    h += `<div class="ag-day"><h3>${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}<small>${WDL[d.getDay()]}${isToday(d) ? ' · hoje' : ''}</small></h3><div>`;
+    if (hn && !view.q) h += `<div style="color:var(--hol);padding:5px 8px">${esc(hn)}</div>`;
+    h += list.map(e => `<button class="ag-ev" data-id="${e.id}" data-date="${ds}" style="--c:${catOf(e.cat).color}"><i></i><span><b>${esc(e.title)}</b><small>${e.allDay ? 'Dia inteiro' : e.start + (e.end ? '–' + e.end : '')}${e.loc ? ' · ' + esc(e.loc) : ''} · ${esc(catOf(e.cat).name)}${e.repeat !== 'none' ? ' · repete' : ''}</small></span></button>`).join('') + '</div></div>';
+  }
+  $('#view').innerHTML = any ? h + '</div>' : `<div class="empty">${view.q ? 'Nenhum evento encontrado para essa busca.' : 'Sem eventos nos próximos 60 dias. Crie um com o botão "Novo evento".'}</div>`;
+}
+function renderMini() {
+  const c = view.cursor, first = new Date(c.getFullYear(), c.getMonth(), 1), start = weekStart(first);
+  let h = `<div class="mh"><span style="text-transform:capitalize">${MONTHS[c.getMonth()]} ${c.getFullYear()}</span></div><div class="mini-grid">` + 'DSTQQSS'.split('').map(w => `<span class="w">${w}</span>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const d = addDays(start, i);
+    h += `<button data-go="${fmt(d)}" class="${d.getMonth() !== c.getMonth() ? 'out' : ''} ${isToday(d) ? 'today' : ''} ${fmt(d) === fmt(c) ? 'sel' : ''} ${eventsOn(d, true).length ? 'has' : ''}">${d.getDate()}</button>`;
+  }
+  $('#mini').innerHTML = h + '</div>';
+}
+function renderCats() {
+  $('#cats').innerHTML = S.cats.map(c => `<label style="--c:${c.color}"><input type="checkbox" data-cat="${c.id}" ${view.hidden.has(c.id) ? '' : 'checked'}><span class="dot"></span>${esc(c.name)}</label>`).join('');
+}
+function renderTasks() {
+  const list = [...S.tasks].sort((a, b) => a.done - b.done || b.prio - a.prio || (a.due || '9').localeCompare(b.due || '9'));
+  const pc = ['#98A2B3', '#E08A1E', '#C93C3C'], today = fmt(new Date());
+  $('#tasks').innerHTML = list.map(t => `<div class="task ${t.done ? 'done' : ''}"><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''} aria-label="Concluir"><i class="p" style="background:${pc[t.prio]}"></i><div class="t"><span class="t">${esc(t.text)}</span>${t.due ? `<small class="${!t.done && t.due < today ? 'late' : ''}">${!t.done && t.due < today ? 'Atrasada · ' : ''}${parse(t.due).getDate()} ${MONTHS[parse(t.due).getMonth()].slice(0, 3)}</small>` : ''}</div><button class="x" data-deltask="${t.id}" aria-label="Excluir tarefa">×</button></div>`).join('') || '<div style="color:var(--muted)">Nenhuma tarefa. Adicione a primeira acima.</div>';
+}
+function renderStats() {
+  const c = view.cursor, last = new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate(), by = {}; let count = 0, mins = 0;
+  for (let i = 1; i <= last; i++) for (const e of eventsOn(new Date(c.getFullYear(), c.getMonth(), i), true)) {
+    count++; const m = e.allDay ? 0 : endMin(e) - toMin(e.start); mins += m; by[e.cat] = (by[e.cat] || 0) + (m || 30);
+  }
+  const max = Math.max(1, ...Object.values(by));
+  $('#stats').innerHTML = `<div class="stat-sum">${count} evento${count === 1 ? '' : 's'} · ${(mins / 60).toFixed(1).replace('.', ',')} h agendadas</div>` +
+    S.cats.filter(k => by[k.id]).map(k => `<div class="stat-row" style="--c:${k.color}"><span style="width:70px">${esc(k.name)}</span><span class="bar"><i style="width:${by[k.id] / max * 100}%"></i></span></div>`).join('');
+}
+
+/* ================= navegação ================= */
+function shift(dir) {
+  const c = view.cursor;
+  if (view.mode === 'month') view.cursor = new Date(c.getFullYear(), c.getMonth() + dir, 1);
+  else if (view.mode === 'week') view.cursor = addDays(c, 7 * dir);
+  else view.cursor = addDays(c, (view.mode === 'day' ? 1 : 30) * dir);
+  render();
+}
+$('#prev').onclick = () => shift(-1); $('#next').onclick = () => shift(1);
+$('#today').onclick = () => { view.cursor = new Date(); render(); };
+$('#modes').onclick = e => { const b = e.target.closest('button'); if (b) { view.mode = b.dataset.m; render(); } };
+$('#search').oninput = e => { view.q = e.target.value.trim(); if (view.q && view.mode !== 'agenda') view.mode = 'agenda'; render(); };
+$('#undo').onclick = undo;
+$('#btn-new').onclick = () => openEvent(null, { date: fmt(view.cursor) });
+$('#mini').onclick = e => { const b = e.target.closest('[data-go]'); if (b) { view.cursor = parse(b.dataset.go); render(); } };
+$('#cats').onchange = e => { const id = e.target.dataset.cat; e.target.checked ? view.hidden.delete(id) : view.hidden.add(id); render(); };
+$('#btn-cat').onclick = () => {
+  const name = prompt('Nome da nova categoria:'); if (!name || !name.trim()) return;
+  const color = '#' + [...Array(3)].map(() => (60 + Math.floor(Math.random() * 150)).toString(16).padStart(2, '0')).join('');
+  snap(); S.cats.push({ id: uid(), name: name.trim().slice(0, 24), color }); save(); render();
+};
+
+/* cliques na área principal (delegação) */
+$('#view').addEventListener('click', e => {
+  const more = e.target.closest('[data-more]');
+  if (more) { view.cursor = parse(more.dataset.more); view.mode = 'day'; return render(); }
+  const ev = e.target.closest('[data-id]');
+  if (ev) { const o = S.events.find(x => x.id === ev.dataset.id); return o && openEvent(o, { date: ev.dataset.date }); }
+  const col = e.target.closest('.col');
+  if (col) {
+    const y = e.clientY - col.getBoundingClientRect().top, m = Math.min(23 * 60, Math.floor(y / 48 * 4) * 15);
+    return openEvent(null, { date: col.dataset.date, start: toTime(m), end: toTime(m + 60) });
+  }
+  const cell = e.target.closest('.cell');
+  if (cell) openEvent(null, { date: cell.dataset.date });
+});
+
+/* arrastar e soltar */
+let drag = null;
+$('#view').addEventListener('dragstart', e => {
+  const el = e.target.closest('[data-id]'); if (!el) return;
+  drag = { id: el.dataset.id, date: el.dataset.date, off: e.clientY - el.getBoundingClientRect().top };
+  e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', drag.id);
+});
+$('#view').addEventListener('dragover', e => { const t = e.target.closest('.cell,.col,.tg-allday>div[data-date]'); if (t && drag) { e.preventDefault(); $$('.cell.drop').forEach(x => x.classList.remove('drop')); if (t.classList.contains('cell')) t.classList.add('drop'); } });
+$('#view').addEventListener('dragend', () => { drag = null; $$('.cell.drop').forEach(x => x.classList.remove('drop')); });
+$('#view').addEventListener('drop', e => {
+  const t = e.target.closest('.cell,.col,.tg-allday>div[data-date]'); if (!t || !drag) return; e.preventDefault();
+  const ev = S.events.find(x => x.id === drag.id); if (!ev) return;
+  snap();
+  const delta = dayDiff(parse(drag.date), parse(t.dataset.date));
+  ev.date = fmt(addDays(parse(ev.date), delta));
+  if (ev.until) ev.until = fmt(addDays(parse(ev.until), delta));
+  if (ev.repeat === 'weekly' && ev.wd) ev.wd = ev.wd.map(w => ((w + delta) % 7 + 7) % 7);
+  if (t.classList.contains('col') && !ev.allDay) {
+    const dur = endMin(ev) - toMin(ev.start), y = e.clientY - t.getBoundingClientRect().top - drag.off;
+    const m = Math.max(0, Math.min(24 * 60 - dur, Math.round(y / 48 * 4) * 15));
+    ev.start = toTime(m); ev.end = toTime(m + dur);
+  }
+  drag = null; save(); render();
+  if (ev.repeat !== 'none') toast('Evento recorrente: a série inteira foi movida.');
+});
+
+/* ================= modal de evento ================= */
+let editing = null;
+const el = id => document.getElementById(id);
+el('ev-wd').innerHTML = WD.map((w, i) => `<label><input type="checkbox" value="${i}">${w}</label>`).join('');
+function fillCats() { el('ev-cat').innerHTML = S.cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join(''); }
+function syncForm() {
+  el('ev-times').hidden = el('ev-allday').checked;
+  const r = el('ev-repeat').value; el('ev-rep-opts').hidden = r === 'none'; el('ev-wd-wrap').hidden = r !== 'weekly';
+  checkConflict();
+}
+function formData() {
+  const wd = $$('#ev-wd input:checked').map(i => +i.value);
+  return {
+    title: el('ev-title').value.trim(), date: el('ev-date').value, allDay: el('ev-allday').checked,
+    start: el('ev-allday').checked ? '' : el('ev-start').value, end: el('ev-allday').checked ? '' : el('ev-end').value,
+    cat: el('ev-cat').value, loc: el('ev-loc').value.trim(), desc: el('ev-desc').value.trim(),
+    repeat: el('ev-repeat').value, interval: Math.max(1, +el('ev-interval').value || 1), until: el('ev-until').value,
+    wd, reminder: +el('ev-reminder').value
+  };
+}
+function checkConflict() {
+  const f = formData(), w = el('ev-warn'); w.textContent = '';
+  if (!f.date || f.allDay || !f.start) return;
+  const tmp = { ...f, id: editing ? editing.id : '__new', ex: [] }, d = parse(f.date);
+  const others = S.events.filter(e => e.id !== tmp.id && occurs(e, d));
+  const clash = others.filter(o => !o.allDay && o.start && toMin(o.start) < endMin(tmp) && toMin(f.start) < endMin(o));
+  if (clash.length) w.textContent = `Conflito de horário com: ${clash.map(c => c.title).join(', ')}.`;
+}
+function openEvent(ev, ctx = {}) {
+  editing = ev; fillCats();
+  el('ev-heading').textContent = ev ? 'Editar evento' : 'Novo evento';
+  const d = ev || { title: '', date: ctx.date || fmt(new Date()), start: ctx.start || '09:00', end: ctx.end || '10:00', allDay: false, cat: S.cats[0].id, loc: '', desc: '', repeat: 'none', interval: 1, until: '', wd: [], reminder: -1 };
+  el('ev-title').value = d.title; el('ev-date').value = ev && ctx.date ? ctx.date : d.date;
+  el('ev-allday').checked = d.allDay; el('ev-start').value = d.start || '09:00'; el('ev-end').value = d.end || '10:00';
+  el('ev-cat').value = d.cat; el('ev-loc').value = d.loc || ''; el('ev-desc').value = d.desc || '';
+  el('ev-repeat').value = d.repeat; el('ev-interval').value = d.interval || 1; el('ev-until').value = d.until || '';
+  el('ev-reminder').value = String(d.reminder);
+  const wd = d.wd && d.wd.length ? d.wd : [parse(d.date).getDay()];
+  $$('#ev-wd input').forEach(i => i.checked = wd.includes(+i.value));
+  el('ev-del').hidden = !ev; el('ev-dup').hidden = !ev;
+  syncForm(); el('dlg-event').showModal(); el('ev-title').focus();
+}
+['ev-allday', 'ev-repeat', 'ev-date', 'ev-start', 'ev-end'].forEach(i => el(i).addEventListener('change', syncForm));
+el('ev-cancel').onclick = () => el('dlg-event').close();
+el('ev-save').onclick = () => {
+  const f = formData();
+  if (!f.title) { el('ev-warn').textContent = 'Informe um título para o evento.'; return el('ev-title').focus(); }
+  if (!f.date) { el('ev-warn').textContent = 'Escolha uma data.'; return; }
+  if (!f.allDay && f.end && f.start && toMin(f.end) <= toMin(f.start)) { el('ev-warn').textContent = 'O horário de fim precisa ser depois do início.'; return; }
+  if (f.until && f.until < f.date) { el('ev-warn').textContent = 'A data final da repetição precisa ser depois da data do evento.'; return; }
+  snap();
+  if (editing) Object.assign(editing, f); else S.events.push({ id: uid(), ex: [], ...f });
+  save(); el('dlg-event').close(); render();
+};
+el('ev-dup').onclick = () => { const c = { ...editing, id: uid(), title: editing.title + ' (cópia)', ex: [] }; snap(); S.events.push(c); save(); el('dlg-event').close(); render(); toast('Evento duplicado.'); };
+el('ev-del').onclick = async () => {
+  const ev = editing, ds = el('ev-date').value; let mode = 'all';
+  if (ev.repeat !== 'none') {
+    mode = await choose('Este evento se repete. O que você quer excluir?', [['Só esta ocorrência', 'one'], ['Todas as ocorrências', 'all', 'danger'], ['Cancelar', null]]);
+    if (!mode) return;
+  }
+  snap();
+  if (mode === 'one') (ev.ex = ev.ex || []).push(ds); else S.events = S.events.filter(x => x.id !== ev.id);
+  save(); el('dlg-event').close(); render(); toast('Evento excluído.', 'Desfazer', undo);
+};
+function choose(msg, opts) {
+  return new Promise(res => {
+    const dlg = el('dlg-choose'); el('choose-msg').textContent = msg; const box = el('choose-btns'); box.innerHTML = '';
+    let val = null;
+    opts.forEach(([label, v, cls]) => { const b = document.createElement('button'); b.className = 'btn ' + (cls || ''); b.textContent = label; b.onclick = () => { val = v; dlg.close(); }; box.append(b); });
+    dlg.addEventListener('close', () => res(val), { once: true }); dlg.showModal();
+  });
+}
+
+/* ================= tarefas ================= */
+el('task-form').onsubmit = e => {
+  e.preventDefault(); const text = el('task-text').value.trim(); if (!text) return;
+  snap(); S.tasks.push({ id: uid(), text, prio: +el('task-prio').value, done: false, due: '' }); el('task-text').value = ''; save(); render();
+};
+el('tasks').onclick = e => {
+  const d = e.target.dataset.deltask; if (d) { snap(); S.tasks = S.tasks.filter(t => t.id !== d); save(); render(); }
+};
+el('tasks').onchange = e => { const t = S.tasks.find(x => x.id === e.target.dataset.task); if (t) { t.done = e.target.checked; save(); render(); } };
+
+/* ================= lembretes ================= */
+function toast(msg, actionLabel, action) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  if (actionLabel) { const b = document.createElement('button'); b.textContent = actionLabel; b.onclick = () => { action(); t.remove(); }; t.append(b); }
+  el('toasts').append(t); setTimeout(() => t.remove(), actionLabel ? 7000 : 4500);
+}
+function checkReminders() {
+  const now = new Date(); let fired = {};
+  try { fired = JSON.parse(localStorage.getItem(KEY + '.fired') || '{}'); } catch (e) { }
+  const limit = fmt(addDays(now, -3)); Object.keys(fired).forEach(k => { if (k.split('|')[1] < limit) delete fired[k]; });
+  for (const ev of S.events) {
+    if (ev.reminder < 0) continue;
+    for (const d of [now, addDays(now, 1)]) {
+      if (!occurs(ev, d)) continue;
+      const startAt = ev.allDay ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), 8, 0) : new Date(d.getFullYear(), d.getMonth(), d.getDate(), ...ev.start.split(':').map(Number));
+      const at = new Date(startAt - ev.reminder * 60000), key = ev.id + '|' + fmt(d);
+      if (now >= at && now < new Date(+startAt + 60000) && !fired[key]) {
+        fired[key] = 1;
+        const when = ev.allDay ? 'Dia inteiro' : 'às ' + ev.start;
+        toast(`Lembrete: ${ev.title} (${when})`);
+        if ('Notification' in window && Notification.permission === 'granted') new Notification(ev.title, { body: when + (ev.loc ? ' · ' + ev.loc : '') });
+      }
+    }
+  }
+  try { localStorage.setItem(KEY + '.fired', JSON.stringify(fired)); } catch (e) { }
+}
+setInterval(checkReminders, 20000);
+setInterval(() => { if (view.mode === 'week' || view.mode === 'day') { const sc = $('#view').scrollTop; render(); $('#view').scrollTop = sc; } }, 60000);
+
+/* ================= menu, importar e exportar ================= */
+const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 500); };
+const icsEsc = s => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+const icsDate = (ds, t) => ds.replace(/-/g, '') + (t ? 'T' + t.replace(':', '') + '00' : '');
+function toICS() {
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Agenda//PT-BR//', 'CALSCALE:GREGORIAN'];
+  for (const e of S.events) {
+    L.push('BEGIN:VEVENT', 'UID:' + e.id + '@agenda.local', 'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z', 'SUMMARY:' + icsEsc(e.title));
+    if (e.allDay) { L.push('DTSTART;VALUE=DATE:' + icsDate(e.date), 'DTEND;VALUE=DATE:' + icsDate(fmt(addDays(parse(e.date), 1)))); }
+    else { L.push('DTSTART:' + icsDate(e.date, e.start), 'DTEND:' + icsDate(e.date, e.end || toTime(toMin(e.start) + 60))); }
+    if (e.loc) L.push('LOCATION:' + icsEsc(e.loc)); if (e.desc) L.push('DESCRIPTION:' + icsEsc(e.desc));
+    if (e.repeat !== 'none') {
+      let r = `RRULE:FREQ=${e.repeat.toUpperCase().replace('DAILY', 'DAILY')};INTERVAL=${e.interval || 1}`;
+      if (e.repeat === 'weekly' && e.wd && e.wd.length) r += ';BYDAY=' + e.wd.map(i => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][i]).join(',');
+      if (e.until) r += ';UNTIL=' + icsDate(e.until) + (e.allDay ? '' : 'T235959');
+      L.push(r);
+      (e.ex || []).forEach(x => L.push('EXDATE' + (e.allDay ? ';VALUE=DATE' : '') + ':' + icsDate(x, e.allDay ? '' : e.start)));
+    }
+    if (e.reminder >= 0) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(e.title), 'TRIGGER:-PT' + e.reminder + 'M', 'END:VALARM');
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR'); return L.join('\r\n');
+}
+el('menu-btn').onclick = () => el('dlg-menu').showModal();
+el('m-close').onclick = () => el('dlg-menu').close();
+el('m-theme').onclick = () => { const cur = document.documentElement.dataset.theme; S.theme = cur === 'dark' ? 'light' : 'dark'; save(); render(); };
+el('m-notif').onclick = async () => {
+  if (!('Notification' in window)) return toast('Seu navegador não suporta notificações.');
+  const p = await Notification.requestPermission(); toast(p === 'granted' ? 'Notificações ativadas.' : 'Permissão de notificações negada.');
+};
+el('m-ics').onclick = () => download('agenda.ics', toICS(), 'text/calendar');
+el('m-json').onclick = () => download('agenda-backup.json', JSON.stringify(S, null, 2), 'application/json');
+el('m-import').onclick = () => el('file-in').click();
+el('file-in').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!Array.isArray(data.events) || !Array.isArray(data.cats)) throw new Error();
+    snap(); S = { theme: null, tasks: [], ...data }; save(); el('dlg-menu').close(); render(); toast('Backup importado.');
+  } catch (err) { toast('Arquivo inválido: use um backup .json gerado por esta agenda.'); }
+  e.target.value = '';
+};
+el('m-reset').onclick = async () => {
+  const ok = await choose('Apagar todos os eventos e tarefas? Você pode desfazer logo em seguida.', [['Apagar tudo', true, 'danger'], ['Cancelar', null]]);
+  if (ok) { snap(); S = { cats: DEFAULT_CATS, theme: S.theme, events: [], tasks: [] }; save(); el('dlg-menu').close(); render(); }
+};
+
+/* ================= atalhos de teclado ================= */
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { if (!$('dialog[open]')) { e.preventDefault(); undo(); } return; }
+  if ($('dialog[open]') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n') { e.preventDefault(); openEvent(null, { date: fmt(view.cursor) }); }
+  else if (k === 't') { view.cursor = new Date(); render(); }
+  else if (k === 'm') { view.mode = 'month'; render(); } else if (k === 's') { view.mode = 'week'; render(); }
+  else if (k === 'd') { view.mode = 'day'; render(); } else if (k === 'l') { view.mode = 'agenda'; render(); }
+  else if (k === 'arrowleft') shift(-1); else if (k === 'arrowright') shift(1);
+  else if (k === '/') { e.preventDefault(); el('search').focus(); }
+});
+
+render(); checkReminders();
+</script>
+</body>
+</html>
